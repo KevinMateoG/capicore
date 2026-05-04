@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Apple, Recycle } from 'lucide-nue-next'
+import { Apple, Recycle } from 'lucide-vue-next'
 
 const sensors = ref([
   { name: 'Torre A - Organicos', level: 82, status: 'Warning', icon: Apple},
