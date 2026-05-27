@@ -21,11 +21,11 @@
             </div>
             <div>
               <p class="text-white font-semibold text-base md:text-lg">Compostera Principal</p>
-              <p class="text-white/40 text-xs md:text-sm mt-0.5">Ciclo actual: Día 18 de 45</p>
+              <p class="text-white/40 text-xs md:text-sm mt-0.5">Ciclo actual: Día {{ compost.current_day }} de {{ compost.total_days }}</p>
             </div>
           </div>
           <div class="compost-bar bg-white/5 h-2 md:h-3 mb-2.5">
-            <div class="compost-fill bg-gradient-to-r from-lime-500 to-emerald-400" style="width: 40%"></div>
+            <div class="compost-fill bg-gradient-to-r from-lime-500 to-emerald-400" style="{ width: progress + '%' }"></div>
           </div>
           <p class="text-white/50 text-[10px] md:text-xs tracking-wide">
             40% COMPLETADO — FASE DE DESCOMPOSICIÓN ACTIVA
@@ -35,12 +35,12 @@
         <div class="grid grid-cols-2 gap-4 md:gap-6 anim-up anim-d2">
           <div class="card-glass p-5 md:p-6 text-center hover:bg-white/[0.06] transition-colors">
             <Thermometer class="text-orange-400 mx-auto mb-2 md:mb-3 w-6 h-6 md:w-8 md:h-8" />
-            <p class="text-white font-bold text-2xl md:text-4xl" style="font-family: 'Fraunces', serif">54°C</p>
+            <p class="text-white font-bold text-2xl md:text-4xl" style="font-family: 'Fraunces', serif">{{ compost.temperature }}°C</p>
             <p class="text-white/40 text-[10px] md:text-xs mt-1 md:mt-2 tracking-wider">TEMPERATURA</p>
           </div>
           <div class="card-glass p-5 md:p-6 text-center hover:bg-white/[0.06] transition-colors">
             <Droplets class="text-sky-400 mx-auto mb-2 md:mb-3 w-6 h-6 md:w-8 md:h-8" />
-            <p class="text-white font-bold text-2xl md:text-4xl" style="font-family: 'Fraunces', serif">62%</p>
+            <p class="text-white font-bold text-2xl md:text-4xl" style="font-family: 'Fraunces', serif">{{ compost.humidity }}%</p>
             <p class="text-white/40 text-[10px] md:text-xs mt-1 md:mt-2 tracking-wider">HUMEDAD</p>
           </div>
         </div>
@@ -53,7 +53,7 @@
             <div>
               <p class="text-white font-semibold text-sm md:text-base mb-1.5 md:mb-2">Tip del día</p>
               <p class="text-white/60 text-xs md:text-sm leading-relaxed">
-                Las cáscaras de huevo trituradas ayudan a equilibrar el pH de tu compostera. ¡Agrégalas en pequeñas cantidades para mejores resultados!
+                {{ compost.daily_tip }}
               </p>
             </div>
           </div>
@@ -95,15 +95,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Sprout, Thermometer, Droplets, Lightbulb } from 'lucide-vue-next';
+import { api } from '@/api.js';
 
-const participants = ref([
-  { name: 'Apto 201 — Familia Ruiz', kg: '12.5 kg', color: 'bg-emerald-500' },
-  { name: 'Apto 304 — Familia Torres', kg: '9.8 kg', color: 'bg-lime-500' },
-  { name: 'Apto 102 — Familia Méndez', kg: '8.2 kg', color: 'bg-teal-500' },
-  { name: 'Apto 405 — Familia López', kg: '6.1 kg', color: 'bg-green-500' },
-  { name: 'Apto 105 — Familia Castro', kg: '4.3 kg', color: 'bg-emerald-500/50' },
-  { name: 'Apto 502 — Familia Silva', kg: '2.1 kg', color: 'bg-emerald-500/30' },
-]);
+const compost      = ref({});
+const participants = ref([]);
+const colors       = ['bg-emerald-500','bg-lime-500','bg-teal-500','bg-green-500','bg-emerald-500/50','bg-emerald-500/30'];
+const progress     = computed(() => Math.round((compost.value.current_day / compost.value.total_days) * 100) || 0);
+
+onMounted(async () => {
+  const data = await api.getCompost();
+  compost.value      = data.compost;
+  participants.value = data.participants.map((p, i) => ({
+    name: `${p.apartment} — ${p.family_name}`,
+    kg:   `${p.kg_contributed} kg`,
+    color: colors[i] || 'bg-emerald-500/20',
+  }));
+});
 </script>
