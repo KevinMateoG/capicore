@@ -99,11 +99,11 @@ import { api } from '@/api.js';
 const recyclingData = ref([]);
 const weekData      = ref([]);
 const stats         = ref({});
-const weekDays      = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+const weekDays      = ref(['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']);
 
 const maxVal = computed(() => Math.max(...weekData.value, 1));
 const calcH  = (v) => Math.round((v / maxVal.value) * 100);
-const isToday = (i) => { const d = new Date().getDay(); return i === (d === 0 ? 6 : d - 1); };
+const isToday = (i) => i === weekDays.value.length - 1;
 
 onMounted(async () => {
   const data = await api.getDashboard();
@@ -114,6 +114,20 @@ onMounted(async () => {
     textColor: `text-${b.color}-400`,
     bgColor:   `bg-${b.color}-400`,
   }));
-  weekData.value = data.weekly.map(w => Number(w.kg));
+
+  if (data.weekly && data.weekly.length > 0) {
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    weekData.value = data.weekly.map(w => Number(w.kg));
+    weekDays.value = data.weekly.map(w => {
+      // Necesitamos asegurar que parsee la fecha correctamente
+      const d = new Date(w.date);
+      // Añadimos horas para evitar desfases de UTC si es necesario, o simplemente getUTCDay()
+      // getUTCDay() suele ser más seguro para fechas que vienen de base de datos tipo 'YYYY-MM-DD'
+      return dayNames[d.getUTCDay()];
+    });
+  } else {
+    weekData.value = [0, 0, 0, 0, 0, 0, 0];
+    weekDays.value = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  }
 });
 </script>

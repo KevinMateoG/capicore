@@ -24,7 +24,7 @@ app.get("/api/dashboard", async (_req, res) => {
       pool.query("SELECT * FROM main_container ORDER BY id DESC LIMIT 1"),
       pool.query("SELECT * FROM monthly_stats ORDER BY month DESC LIMIT 1"),
       pool.query("SELECT * FROM recycling_breakdown WHERE month = DATE_TRUNC('month', NOW()) ORDER BY id"),
-      pool.query("SELECT date, kg FROM weekly_waste WHERE date >= CURRENT_DATE - 6 ORDER BY date ASC"),
+      pool.query("SELECT date, kg FROM (SELECT date, kg FROM weekly_waste ORDER BY date DESC LIMIT 7) sub ORDER BY date ASC"),
     ]);
     res.json({
       container: container.rows[0],

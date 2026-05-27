@@ -1,6 +1,6 @@
 <script setup>
 defineProps({
-  CurrentTab:{
+  currentTab:{
     type: String,
     required: true
   }
@@ -16,10 +16,10 @@ defineEmits(['change-tab'])
           <span class="text-[9px] font-medium">Inicio</span>
         </button>
 
-        <Button @click="$emit('change-tab', 'sensors')"
+        <button @click="$emit('change-tab', 'sensors')"
                 :class="['flex flex-col items-center gap-1', currentTab === 'sensors' ? 'text-emerald-400' : 'text-white/30']">
           <span class="text-[9px] font-medium">Sensors</span>
-        </Button>
+        </button>
 
         <button @click="$emit('change-tab', 'compost')"
                 :class="['flex flex-col items-center gap-1', currentTab === 'compost' ? 'text-emerald-400' : 'text-white/30']">
