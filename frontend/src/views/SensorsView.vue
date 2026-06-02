@@ -55,28 +55,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Apple, Recycle, Trash2, BatteryWarning } from 'lucide-vue-next';
+import { api } from '@/api.js';
 
-// Simulamos una base de datos de sensores
-const sensors = ref([
-  { name: 'Torre A — Orgánicos', level: 82, status: 'warning', icon: Apple },
-  { name: 'Torre A — Reciclaje', level: 45, status: 'ok', icon: Recycle },
-  { name: 'Torre C — Orgánicos', level: 91, status: 'critical', icon: Apple },
-  { name: 'Torre B — General', level: 60, status: 'warning', icon: Trash2 },
-  { name: 'Torre B — Vidrio', level: 20, status: 'ok', icon: Recycle },
-  { name: 'Zona Común — Pilas', level: 98, status: 'critical', icon: BatteryWarning },
-]);
+const iconMap = { organic: Apple, recycle: Recycle, general: Trash2, battery: BatteryWarning };
+const sensors = ref([]);
 
-const getColor = (status) => {
-  if (status === 'critical') return 'rose';
-  if (status === 'warning') return 'amber';
-  return 'emerald'; // OK
-};
+onMounted(async () => {
+  const data = await api.getSensors();
+  sensors.value = data.map(s => ({ ...s, icon: iconMap[s.icon_type] }));
+});
 
-const getStatusText = (status) => {
-  if (status === 'critical') return 'URGENTE';
-  if (status === 'warning') return 'ALTO';
-  return 'NORMAL';
-};
+const getColor      = (status) => status === 'critical' ? 'rose' : status === 'warning' ? 'amber' : 'emerald';
+const getStatusText = (status) => status === 'critical' ? 'URGENTE' : status === 'warning' ? 'ALTO' : 'NORMAL';
 </script>

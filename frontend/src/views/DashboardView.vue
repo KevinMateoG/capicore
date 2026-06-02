@@ -32,17 +32,17 @@
     <div class="grid grid-cols-3 gap-3 anim-up anim-d2">
       <div class="card-glass p-4 flex flex-col items-center justify-center text-center gap-1.5">
         <Trash2 class="text-rose-400 w-5 h-5 shrink-0" />
-        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">324</p>
+        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">{{ stats.kg_total }}</p>
         <p class="text-white/40 text-[9px] tracking-wide leading-tight">KG ESTE MES</p>
       </div>
       <div class="card-glass p-4 flex flex-col items-center justify-center text-center gap-1.5">
         <Recycle class="text-cyan-400 w-5 h-5 shrink-0" />
-        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">47%</p>
+        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">{{ stats.recycled_percentage }}%</p>
         <p class="text-white/40 text-[9px] tracking-wide">RECICLADO</p>
       </div>
       <div class="card-glass p-4 flex flex-col items-center justify-center text-center gap-1.5">
         <Leaf class="text-lime-400 w-5 h-5 shrink-0" />
-        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">58</p>
+        <p class="text-white font-bold text-xl leading-none" style="font-family:'Fraunces',serif">{{ stats.compost_kg }}</p>
         <p class="text-white/40 text-[9px] tracking-wide">KG COMPOST</p>
       </div>
     </div>
@@ -92,22 +92,42 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { Trash2, Recycle, Leaf } from 'lucide-vue-next';
+import { api } from '@/api.js';
 
-const recyclingData = ref([
-  { name: 'Plástico',     percentage: 62, textColor: 'text-cyan-400',    bgColor: 'bg-cyan-400' },
-  { name: 'Papel/Cartón', percentage: 78, textColor: 'text-blue-400',    bgColor: 'bg-blue-400' },
-  { name: 'Vidrio',       percentage: 45, textColor: 'text-emerald-400', bgColor: 'bg-emerald-400' },
-  { name: 'Metal',        percentage: 33, textColor: 'text-amber-400',   bgColor: 'bg-amber-400' },
-]);
+const recyclingData = ref([]);
+const weekData      = ref([]);
+const stats         = ref({});
+const weekDays      = ref(['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']);
 
-const weekData  = ref([42, 38, 55, 47, 63, 51, 44]);
-const weekDays  = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-const maxVal    = Math.max(...weekData.value);
-const calcH     = (v) => Math.round((v / maxVal) * 100);
-const isToday   = (i) => {
-  const d = new Date().getDay();
-  return i === (d === 0 ? 6 : d - 1);
-};
+const maxVal = computed(() => Math.max(...weekData.value, 1));
+const calcH  = (v) => Math.round((v / maxVal.value) * 100);
+const isToday = (i) => i === weekDays.value.length - 1;
+
+onMounted(async () => {
+  const data = await api.getDashboard();
+  stats.value        = data.stats;
+  recyclingData.value = data.breakdown.map(b => ({
+    name: b.name,
+    percentage: b.percentage,
+    textColor: `text-${b.color}-400`,
+    bgColor:   `bg-${b.color}-400`,
+  }));
+
+  if (data.weekly && data.weekly.length > 0) {
+    const dayNames = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+    weekData.value = data.weekly.map(w => Number(w.kg));
+    weekDays.value = data.weekly.map(w => {
+      // Necesitamos asegurar que parsee la fecha correctamente
+      const d = new Date(w.date);
+      // Añadimos horas para evitar desfases de UTC si es necesario, o simplemente getUTCDay()
+      // getUTCDay() suele ser más seguro para fechas que vienen de base de datos tipo 'YYYY-MM-DD'
+      return dayNames[d.getUTCDay()];
+    });
+  } else {
+    weekData.value = [0, 0, 0, 0, 0, 0, 0];
+    weekDays.value = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  }
+});
 </script>
